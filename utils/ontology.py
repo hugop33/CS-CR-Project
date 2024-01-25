@@ -160,7 +160,7 @@ def process_title_ratings(onto, row):
         movie.noteIMDB = float(row['averageRating'])
 
 
-def full_population(onto):
+def film_population(onto):
     movies_data = load_movies_data(f'{DATA}movies_data.json')
     populate_onto(onto, 
         [f'{DATA}filtered_name_basics.tsv', f'{DATA}filtered_title_basics.tsv', f'{DATA}filtered_title_crew.tsv', f'{DATA}filtered_title_principals.tsv', f'{DATA}filtered_title_ratings.tsv'],

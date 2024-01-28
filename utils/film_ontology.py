@@ -222,7 +222,11 @@ if __name__ == "__main__":
     # save_ontology(onto, f'{DATA}smallIMDB_randusers.owl')
 
     users_onto = load_ontology(f'{DATA}smallIMDB_randusers.owl')
-    # get all requests
-    requests = users_onto.aCherché.get_relations()
-    for req in requests:
-        print(req)
+    # get all requests from user
+    uid = "u5"
+    user = users_onto.User(uid)
+    requests = user.aCherché
+    print(f"User {uid} has requested {len(requests)} items")
+    # for request in requests:
+    #     # get all films linked to the request
+    #     linked_films = request.

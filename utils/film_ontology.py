@@ -1,13 +1,16 @@
 import owlready2
-from owlready2 import Thing, get_ontology, AllDisjoint, sync_reasoner_pellet, Imp, FunctionalProperty
+from owlready2 import Thing, get_ontology, AllDisjoint, sync_reasoner_pellet, Imp, FunctionalProperty, ObjectProperty, owl_unionof
 import json
 import csv
+import random
 
 from config import OWLREADY2_JAVA_EXE, DATA
 
 # Set the path to the Java executable
 owlready2.JAVA_EXE = OWLREADY2_JAVA_EXE
 
+DUMB_USER_NAMES = ["user1", "user2", "user3", "user4", "user5", "user6", "user7", "user8", "user9", "user10"]
+USER_IDS = [f"u{i}" for i in range(1, 11)]
 
 
 def parse_currency_to_int(currency_str):
@@ -37,18 +40,21 @@ def save_ontology(onto, filename):
 
 def create_classes(onto):
     with onto:
-        class Personne(Thing): pass
-        class Film(Thing): pass
+        class User(Thing): pass
+        class RequestItem(Thing): pass
+        class Personne(RequestItem): pass
+        class Film(RequestItem): pass
             
-        class GenreFilm(Thing):   pass
+        class GenreFilm(RequestItem): pass
 
-        class Pays(Thing): pass
+        class Pays(RequestItem): pass
 
-        AllDisjoint([Personne, Film, GenreFilm, Pays])
+        AllDisjoint([Personne, Film, GenreFilm, Pays, User])
 
         class Acteur(Personne): pass
         class Réalisateur(Personne): pass
         class Scénariste(Personne):  pass
+
 
         class aJouéDans(Acteur >> Film): pass
         class aPourDistribution(Film >> Acteur):
@@ -73,6 +79,10 @@ def create_classes(onto):
         class aPourDurée(Film >> int, FunctionalProperty): pass
         # The budget is a functional property
         class aPourBudget(Film >> int, FunctionalProperty): pass
+
+        class aCherché(User >> RequestItem): pass
+        class CherchéPar(RequestItem >> User):
+            inverse_property = aCherché
 
 
 def load_movies_data(filename):
@@ -166,3 +176,53 @@ def film_population(onto):
         [f'{DATA}filtered_name_basics.tsv', f'{DATA}filtered_title_basics.tsv', f'{DATA}filtered_title_crew.tsv', f'{DATA}filtered_title_principals.tsv', f'{DATA}filtered_title_ratings.tsv'],
         [lambda onto, row: process_name_basics(onto, row), lambda onto, row: process_title_basics(onto, movies_data, row), lambda onto, row: process_title_crew(onto, row), lambda onto, row: process_title_principals(onto, row), lambda onto, row: process_title_ratings(onto, row)]
     )
+
+
+def add_request(onto, user_id, attribute):
+    """
+    Add a request to the ontology.
+    """
+    with onto:
+        # if user already in ontology, get it, else create it
+        user = onto[user_id] if user_id in onto.User.instances() else onto.User(user_id)
+        user.aCherché.append(attribute)
+
+
+def random_requests_populating(onto, n_req):
+    """
+    Add n_req random requests to the ontology.
+    Attributes requested by the users are chosen randomly.
+    """
+    users = [random.choice(USER_IDS) for _ in range(n_req)]
+    film_instances = list(onto.Film.instances())
+    acteur_instances = list(onto.Acteur.instances())
+    réalisateur_instances = list(onto.Réalisateur.instances())
+    genre_instances = list(onto.GenreFilm.instances())
+    pays_instances = list(onto.Pays.instances())
+    scénariste_instances = list(onto.Scénariste.instances())
+    attributes = film_instances + acteur_instances + réalisateur_instances + genre_instances + pays_instances + scénariste_instances
+    attributes = [random.choice(attributes) for _ in range(n_req)]
+    for user_id, attribute in zip(users, attributes):
+        add_request(onto, user_id, attribute)
+
+
+
+if __name__ == "__main__":
+    # onto = create_ontology()
+    # create_classes(onto)
+    # film_population(onto)
+    # # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
+    # # save_ontology(onto, f'{DATA}smallIMDB.owl')
+    # # print("Ontology saved")
+
+    # # onto = load_ontology(f'{DATA}smallIMDB.owl')
+    
+    # random_requests_populating(onto, 100)
+    # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug=2)
+    # save_ontology(onto, f'{DATA}smallIMDB_randusers.owl')
+
+    users_onto = load_ontology(f'{DATA}smallIMDB_randusers.owl')
+    # get all requests
+    requests = users_onto.aCherché.get_relations()
+    for req in requests:
+        print(req)

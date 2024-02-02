@@ -18,11 +18,17 @@ def recommendation(onto, user_id):
     """
     user = onto.User(user_id)
     requests = user.aCherché
+    films_vus = []
     films = []
     counts = {}
     # for each request, add all the films that are linked by any relation to the request
     for request in requests:
+        if isinstance(request, onto.Film):
+            films_vus.append(request)
         films += get_related_films(onto, request)
+
+    # remove the films that the user has already seen
+    films = [film for film in films if film not in films_vus]
     # count the number of times each film appears
     for film in films:
         counts[film] = counts.get(film, 0) + 1

@@ -12,4 +12,6 @@
 data/
 __pycache__/
 .python-version
+config.py
+
 ```

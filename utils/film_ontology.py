@@ -10,7 +10,7 @@ from config import OWLREADY2_JAVA_EXE, DATA
 owlready2.JAVA_EXE = OWLREADY2_JAVA_EXE
 
 DUMB_USER_NAMES = ["user1", "user2", "user3", "user4", "user5", "user6", "user7", "user8", "user9", "user10"]
-USER_IDS = [f"u{i}" for i in range(1, 11)]
+USER_IDS = [f"u{i}" for i in range(1, 31)]
 
 
 def parse_currency_to_int(currency_str):
@@ -79,6 +79,16 @@ def create_classes(onto):
         class aPourDurée(Film >> int, FunctionalProperty): pass
         # The budget is a functional property
         class aPourBudget(Film >> int, FunctionalProperty): pass
+
+        class aLiké(User >> Film): pass
+
+        class LikéPar(Film >> User):
+            inverse_property = aLiké
+        
+        class aDisliké(User >> Film): pass
+
+        class DislikéPar(Film >> User):
+            inverse_property = aDisliké
 
         class aCherché(User >> RequestItem): pass
         class CherchéPar(RequestItem >> User):
@@ -187,13 +197,27 @@ def add_request(onto, user_id, attribute):
         user = onto[user_id] if user_id in onto.User.instances() else onto.User(user_id)
         user.aCherché.append(attribute)
 
+def add_like_dislike(onto, user_id, film, like=True):
+    """
+    Add a like or dislike to the ontology.
+    """
+    with onto:
+        # if user already in ontology, get it, else create it
+        user = onto[user_id] if user_id in onto.User.instances() else onto.User(user_id)
+        if like:
+            user.aLiké.append(film)
+        else:
+            user.aDisliké.append(film)
 
-def random_requests_populating(onto, n_req):
+
+def random_requests_populating(onto, n_req, n_likes, n_dislikes):
     """
     Add n_req random requests to the ontology.
     Attributes requested by the users are chosen randomly.
     """
-    users = [random.choice(USER_IDS) for _ in range(n_req)]
+    users_req = [random.choice(USER_IDS) for _ in range(n_req)]
+    users_likes = [random.choice(USER_IDS) for _ in range(n_likes)]
+    users_dislikes = [random.choice(USER_IDS) for _ in range(n_dislikes)]
     film_instances = list(onto.Film.instances())
     acteur_instances = list(onto.Acteur.instances())
     réalisateur_instances = list(onto.Réalisateur.instances())
@@ -201,9 +225,15 @@ def random_requests_populating(onto, n_req):
     pays_instances = list(onto.Pays.instances())
     scénariste_instances = list(onto.Scénariste.instances())
     attributes = film_instances + acteur_instances + réalisateur_instances + genre_instances + pays_instances + scénariste_instances
-    attributes = [random.choice(attributes) for _ in range(n_req)]
-    for user_id, attribute in zip(users, attributes):
+    attributes_req = [random.choice(attributes) for _ in range(n_req)]
+    attributes_likes = [random.choice(film_instances) for _ in range(n_likes)]
+    attributes_dislikes = [random.choice(film_instances) for _ in range(n_dislikes)]
+    for user_id, attribute in zip(users_req, attributes_req):
         add_request(onto, user_id, attribute)
+    for user_id, film in zip(users_likes, attributes_likes):
+        add_like_dislike(onto, user_id, film, like=True)
+    for user_id, film in zip(users_dislikes, attributes_dislikes):
+        add_like_dislike(onto, user_id, film, like=False)
 
 
 
@@ -211,17 +241,18 @@ if __name__ == "__main__":
     # onto = create_ontology()
     # create_classes(onto)
     # film_population(onto)
-    # # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
-    # # save_ontology(onto, f'{DATA}smallIMDB.owl')
-    # # print("Ontology saved")
+    # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
+    # save_ontology(onto, f'{DATA}smallIMDB.owl')
+    # print("Ontology saved")
 
-    # # onto = load_ontology(f'{DATA}smallIMDB.owl')
+    onto = load_ontology(f'{DATA}smallIMDB.owl')
     
-    # random_requests_populating(onto, 100)
-    # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug=2)
-    # save_ontology(onto, f'{DATA}smallIMDB_randusers.owl')
+    random_requests_populating(onto, 100, 50, 20)
+    sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug=2)
+    save_ontology(onto, f'{DATA}smallIMDB_randusers_likes.owl')
+    print("Ontology saved")
 
-    users_onto = load_ontology(f'{DATA}smallIMDB_randusers.owl')
+    users_onto = load_ontology(f'{DATA}smallIMDB_randusers_likes.owl')
     # get all requests from user
     uid = "u5"
     user = users_onto.User(uid)

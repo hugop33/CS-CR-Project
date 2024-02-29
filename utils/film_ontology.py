@@ -238,21 +238,24 @@ def random_requests_populating(onto, n_req, n_likes, n_dislikes):
 
 
 if __name__ == "__main__":
-    # onto = create_ontology()
-    # create_classes(onto)
-    # film_population(onto)
+    onto = create_ontology()
+    create_classes(onto)
+    film_population(onto)
     # sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
-    # save_ontology(onto, f'{DATA}smallIMDB.owl')
-    # print("Ontology saved")
-
-    onto = load_ontology(f'{DATA}smallIMDB.owl')
-    
-    random_requests_populating(onto, 100, 50, 20)
-    sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug=2)
-    save_ontology(onto, f'{DATA}smallIMDB_randusers_likes.owl')
+    save_ontology(onto, f'{DATA}smallIMDB_test.owl')
     print("Ontology saved")
 
-    users_onto = load_ontology(f'{DATA}smallIMDB_randusers_likes.owl')
+
+    onto_ = load_ontology(f'{DATA}smallIMDB_test.owl')
+    
+    random_requests_populating(onto_, 100, 50, 20)
+    sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True, debug=2)
+    save_ontology(onto_, f'{DATA}smallIMDB_randusers_likes_test.owl')
+    print("Ontology saved")
+
+    # users_onto = onto
+
+    users_onto = load_ontology(f'{DATA}smallIMDB_randusers_likes_test.owl')
     # get all requests from user
     uid = "u5"
     user = users_onto.User(uid)

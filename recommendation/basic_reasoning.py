@@ -42,6 +42,8 @@ def recommendation(onto, user_id):
     likes = user.aLiké
     dislikes = user.aDisliké
     films_vus = []
+    films_liked_near = []
+    films_disliked_near = []
     films = []
     counts = {}
     # for each request, add all the films that are linked by any relation to the request

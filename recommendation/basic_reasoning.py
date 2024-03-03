@@ -11,6 +11,8 @@ def get_related_films(onto, instance):
                 related_films.append(value)
     return related_films
 
+
+
 def linked_films(onto, film, thresh=2):
     """
     Return the films that are related to the given film.
@@ -28,15 +30,18 @@ def linked_films(onto, film, thresh=2):
                     if isinstance(value2, onto.Film):
                         related_films.append(value2)
     counts = {}
-    for film in related_films:
-        counts[film] = counts.get(film, 0) + 1
-    return [film for film, count in counts.items() if count > thresh]
+    for film_link in related_films:
+        counts[film_link] = counts.get(film_link, 0) + 1
+
+    return [[film,film_link,count] for film_link, count in counts.items() if count > thresh]
 
 
 def recommendation(onto, user_id):
+
     """
     Return the recommendations for a given user.
     """
+
     user = onto.User(user_id)
     requests = user.aCherché
     likes = user.aLiké
@@ -44,37 +49,43 @@ def recommendation(onto, user_id):
     films_vus = []
     films_liked_near = []
     films_disliked_near = []
+    films_search_near = []
     films = []
-    counts = {}
+    score = {}
+    coeff_exponential = 1.2
+
+    # add film liked and disliked by the user in films_vus
+    for film in likes+dislikes:
+        films_vus.append(film)
+
+    # add all the films that the user liked
+        
+    for film in likes:
+        films_liked_near = [linked_film for linked_film in linked_films(onto, film) if linked_film[1] not in films_vus]
+        for linked_film in films_liked_near:
+            score[linked_film[1]] = score.get(linked_film[1], 0) + 3*linked_film[2]**coeff_exponential
+
+    # add the films that the user disliked
+    for film in dislikes:
+        films_disliked_near = [linked_film for linked_film in linked_films(onto, film) if linked_film[1] not in films_vus]
+        for linked_film in films_disliked_near:
+            score[linked_film[1]] = score.get(linked_film[1], 0) - 3*linked_film[2]**coeff_exponential
+
+
     # for each request, add all the films that are linked by any relation to the request
     for request in requests:
-        if isinstance(request, onto.Film):
-            films_vus.append(request)
-        films += get_related_films(onto, request)
-    # add all the films that the user liked
-    for film in likes:
-        films_vus.append(film)
-        films_liked_near = linked_films(onto, film)
-        films += films_liked_near
-    # remove the films that the user disliked
-    for film in dislikes:
-        films_vus.append(film)
-        films_disliked_near = linked_films(onto, film)
-        films += films_disliked_near
+        films_search_near = [film_related for film_related in get_related_films(onto, request) if film_related not in films_vus]
+        for film_related in films_search_near:
+            score[film_related] = score.get(film_related, 0) + 1
 
-    # remove the films that the user has already seen
-    films = [film for film in films if film not in films_vus]
-    # count the number of times each film appears
-    for film in films:
-        counts[film] = counts.get(film, 0) + 1
-        if film in films_liked_near:
-            counts[film] += 3
-        if film in films_disliked_near:
-            counts[film] -= 3
+    
     # sort the films by the number of times they appear
-    sorted_films = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+    sorted_films = sorted(score.items(), key=lambda item: item[1], reverse=True)
+    #afficher le nom des films déjà vus
+    for film in films_vus:
+        print(film.aPourTitre)
     return sorted_films
-
+    
 
 if __name__ == "__main__":
     onto = load_ontology(f'{DATA}smallIMDB_randusers_likes.owl')

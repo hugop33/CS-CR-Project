@@ -82,7 +82,6 @@ def recommendation(onto, user_id):
     # sort the films by the number of times they appear
     sorted_films = sorted(score.items(), key=lambda item: item[1], reverse=True)
 
-    #afficher le nom des films déjà vus
     return sorted_films
     
 

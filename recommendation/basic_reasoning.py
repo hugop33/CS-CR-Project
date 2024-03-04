@@ -69,7 +69,7 @@ def recommendation(onto, user_id):
     for film in dislikes:
         films_disliked_near = [linked_film for linked_film in linked_films(onto, film) if linked_film[1] not in films_vus]
         for linked_film in films_disliked_near:
-            score[linked_film[1]] = score.get(linked_film[1], 0) - 3*linked_film[2]**coeff_exponential
+            score[linked_film[1]] = score.get(linked_film[1], 0) - 2*linked_film[2]**coeff_exponential
 
 
     # for each request, add all the films that are linked by any relation to the request

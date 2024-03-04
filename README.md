@@ -12,9 +12,9 @@ L'utilisation de la BDD IMDb complète ne nous a pas paru utile, et aurait été
 Nous avons ensuite enrichi cette BDD avec des utilisateurs, puis peuplé avec des requêtes (recherches, likes, dislikes) aléatoires pour simuler des utilisateurs.
 
 **Recommandation** : pour recommander des films à un utilisateur, nous attribuons un score à chaque film en fonction de ses intéractions avec les films précédents. Le calcul de ce score repose sur la logique suivante :
-- Si l'utilisateur a aimé un film, il est probable qu'il aime les films du même genre, avec les mêmes acteurs, réalisateurs, etc. On donne donc un score +3 aux films qui ont des points communs avec les films aimés.
-- Si l'utilisateur a détesté un film, on donne un score -3 aux films qui ont des points communs avec les films détestés.
-- Si l'utilisateur a simplement regardé un film, on donne un score +1 aux films qui ont des points communs avec les films regardés.
+- Si l'utilisateur a aimé un film, il est probable qu'il aime les films du même genre, avec les mêmes acteurs, réalisateurs, etc. On donne donc un score +3*N^1.2 aux films qui ont des points communs avec les films aimés (avec N le nombre de points commun entre le film aimé et le film à qui on augmente le score).
+- Si l'utilisateur a détesté un film, on donne un score -2*N^1.2 aux films qui ont des points communs avec les films détestés.
+- Si l'utilisateur a fait une recherche, on donne un score +1 à chaque film pour chaque point commun avec les recherches réalisées.
 
 ## Utilisation
 Pour utiliser ce programme, si la base de données entière décrite précédemment existe déjà (avec les requêtes utilisateurs, normalement déjà incluse dans le zip), il suffit de lancer le fichier `main.py` puis de donner un identifiant d'utilisateur (parmi ceux existants dans la BDD) pour obtenir une recommandation de films.
